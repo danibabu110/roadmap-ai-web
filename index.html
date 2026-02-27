@@ -3,257 +3,196 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Roadmap AI Mentor</title>
+<title>Roadmap AI</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-::-webkit-scrollbar { width:6px; }
-::-webkit-scrollbar-track { background:#1f2937; }
-::-webkit-scrollbar-thumb { background:#4b5563; border-radius:4px; }
-
-.node-line::after{
-content:'';
-position:absolute;
-top:100%;
-left:50%;
-width:2px;
-height:24px;
-background:#3b82f6;
-transform:translateX(-50%);
+body { overflow: hidden; }
+.spinner {
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
 }
-
-.spinner{
-border:3px solid rgba(255,255,255,0.1);
-border-top-color:#3b82f6;
-border-radius:50%;
-width:20px;
-height:20px;
-animation:spin 1s linear infinite;
-}
-@keyframes spin { to{transform:rotate(360deg);} }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 
-<body class="bg-gray-900 text-gray-100 h-screen flex overflow-hidden">
+<body class="bg-gray-900 text-gray-100 h-screen flex">
 
-<!-- Sidebar -->
-<aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col hidden md:flex">
-<div class="p-6 border-b border-gray-700">
-<h1 class="text-xl font-bold text-blue-400">Roadmap AI</h1>
-<p class="text-xs text-gray-400">Select Skill</p>
-</div>
-
-<div id="skills-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-<div class="text-gray-500 text-sm text-center mt-4">Loading skills...</div>
-</div>
+<!-- SIDEBAR -->
+<aside class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
+  <h1 class="text-xl font-bold text-blue-400 mb-4">Roadmap AI</h1>
+  <div id="skills-list" class="space-y-2 text-sm">
+    <div class="text-gray-400">Loading skills...</div>
+  </div>
 </aside>
 
-<!-- Main -->
+<!-- MAIN -->
 <main class="flex-1 flex flex-col">
 
-<header class="p-6 border-b border-gray-800">
-<h2 id="current-skill-title" class="text-2xl font-semibold">Select a skill to begin.</h2>
+<header class="p-4 border-b border-gray-700 bg-gray-900">
+  <h2 id="current-skill-title" class="text-xl font-semibold">Select Skill</h2>
 </header>
 
-<div class="flex-1 overflow-y-auto p-8">
-<div id="roadmap-container" class="max-w-md mx-auto flex flex-col items-center space-y-6">
-<p class="text-gray-500">Select a skill to begin.</p>
-</div>
+<div class="flex-1 overflow-y-auto p-6">
+  <div id="roadmap-container" class="max-w-md mx-auto space-y-4">
+    <p class="text-gray-500">Select a skill to begin.</p>
+  </div>
 </div>
 
 </main>
 
-<!-- Right Panel -->
+<!-- RIGHT PANEL -->
 <aside class="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
 
-<div class="flex-1 overflow-y-auto p-6 border-b border-gray-700">
-
-<h3 id="node-title" class="text-lg font-bold text-blue-400 mb-2">Topic Info</h3>
-
-<div id="node-explain-content" class="text-sm text-gray-300">
-<p class="text-gray-500">Click a node.</p>
+<div class="p-4 border-b border-gray-700">
+  <h3 id="node-title" class="text-lg font-bold text-blue-400">Topic Info</h3>
+  <div id="node-explain-content" class="text-sm mt-2 text-gray-300">
+    Click a node.
+  </div>
 </div>
 
-<h4 id="cert-header" class="text-sm font-semibold text-gray-400 uppercase mt-6 mb-2 hidden">
-Courses & Certifications
-</h4>
-
-<ul id="node-certs-list" class="space-y-2 text-sm"></ul>
-
-</div>
-
-<!-- Chat -->
-<div class="h-64 flex flex-col">
-
-<div class="p-3 border-b border-gray-700 bg-gray-800">
-<span class="font-semibold text-sm">Ask AI mentor...</span>
-</div>
-
-<div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
-<div class="bg-gray-700 p-2 rounded inline-block max-w-[85%]">
-Hi! I'm your AI mentor 👋
-</div>
-</div>
-
-<div class="p-3 bg-gray-800 border-t border-gray-700 flex gap-2">
-<input id="chat-input" class="flex-1 bg-gray-700 rounded px-3 py-1.5 text-sm" placeholder="Type message...">
-<button id="send-btn" class="bg-blue-600 px-3 py-1.5 rounded text-sm">Send</button>
-</div>
-
+<div class="p-4 border-t border-gray-700 flex flex-col h-64">
+  <div class="font-semibold text-sm mb-2">AI Mentor</div>
+  <div id="chat-messages" class="flex-1 overflow-y-auto text-sm space-y-2 mb-2"></div>
+  <div class="flex gap-2">
+    <input id="chat-input" class="flex-1 bg-gray-700 p-2 rounded text-sm" placeholder="Ask AI mentor...">
+    <button id="send-btn" class="bg-blue-600 px-3 rounded">Send</button>
+  </div>
 </div>
 
 </aside>
 
-<script>
+<!-- FIREBASE + APP -->
+<script type="module">
 
-const API_BASE="/api";
+/* ===============================
+   FIREBASE AUTH CHECK
+================================= */
 
-const dom={
-skillsList:document.getElementById("skills-list"),
-roadmapContainer:document.getElementById("roadmap-container"),
-skillTitle:document.getElementById("current-skill-title"),
-nodeTitle:document.getElementById("node-title"),
-nodeExplain:document.getElementById("node-explain-content"),
-certHeader:document.getElementById("cert-header"),
-certsList:document.getElementById("node-certs-list"),
-chatMessages:document.getElementById("chat-messages"),
-chatInput:document.getElementById("chat-input"),
-sendBtn:document.getElementById("send-btn")
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
 };
 
-async function fetchSkills(){
-const res=await fetch(`${API_BASE}/skills`);
-const skills=await res.json();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-dom.skillsList.innerHTML="";
-skills.forEach(skill=>{
-const btn=document.createElement("button");
-btn.className="w-full text-left px-4 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 capitalize";
-btn.innerText=skill.replace("-"," ");
-btn.onclick=()=>loadRoadmap(skill);
-dom.skillsList.appendChild(btn);
-});
-}
-
-async function loadRoadmap(skill){
-dom.skillTitle.innerText=skill.replace("-"," ");
-dom.roadmapContainer.innerHTML='<div class="spinner"></div>';
-
-const res=await fetch(`${API_BASE}/generate`,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({skill})
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "/login.html";
+  }
 });
 
-const data=await res.json();
-renderRoadmap(data.roadmap.nodes);
+/* ===============================
+   APP LOGIC
+================================= */
+
+const API_BASE = "/api";
+
+const dom = {
+  skillsList: document.getElementById("skills-list"),
+  roadmapContainer: document.getElementById("roadmap-container"),
+  skillTitle: document.getElementById("current-skill-title"),
+  nodeTitle: document.getElementById("node-title"),
+  nodeExplain: document.getElementById("node-explain-content"),
+  chatMessages: document.getElementById("chat-messages"),
+  chatInput: document.getElementById("chat-input"),
+  sendBtn: document.getElementById("send-btn")
+};
+
+async function fetchSkills() {
+  const res = await fetch(`${API_BASE}/skills`);
+  const skills = await res.json();
+
+  dom.skillsList.innerHTML = "";
+
+  skills.forEach(skill => {
+    const btn = document.createElement("button");
+    btn.className = "block w-full text-left p-2 rounded hover:bg-gray-700 capitalize";
+    btn.innerText = skill;
+    btn.onclick = () => loadRoadmap(skill);
+    dom.skillsList.appendChild(btn);
+  });
 }
 
-function renderRoadmap(nodes){
-dom.roadmapContainer.innerHTML="";
-nodes.forEach((node,index)=>{
-const div=document.createElement("div");
-div.className="relative w-64";
+async function loadRoadmap(skill) {
+  dom.skillTitle.innerText = skill;
+  dom.roadmapContainer.innerHTML = "<div class='spinner'></div>";
 
-const btn=document.createElement("button");
-btn.className="w-full bg-gray-800 border border-blue-500 py-3 rounded";
-btn.innerText=node;
-btn.onclick=()=>loadNodeDetails(node);
+  const res = await fetch(`${API_BASE}/generate`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ skill })
+  });
 
-div.appendChild(btn);
+  const data = await res.json();
 
-if(index<nodes.length-1){
-const line=document.createElement("div");
-line.className="node-line";
-div.appendChild(line);
+  dom.roadmapContainer.innerHTML = "";
+
+  data.roadmap.nodes.forEach(node => {
+    const btn = document.createElement("button");
+    btn.className = "w-full bg-gray-800 border border-blue-500 p-3 rounded hover:bg-gray-700";
+    btn.innerText = node;
+    btn.onclick = () => loadNode(node);
+    dom.roadmapContainer.appendChild(btn);
+  });
 }
 
-dom.roadmapContainer.appendChild(div);
+async function loadNode(node) {
+  dom.nodeTitle.innerText = node;
+  dom.nodeExplain.innerHTML = "<div class='spinner'></div>";
+
+  const res = await fetch(`${API_BASE}/explain`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ topic: node })
+  });
+
+  const data = await res.json();
+  dom.nodeExplain.innerText = data.explanation;
+}
+
+/* ===============================
+   CHAT
+================================= */
+
+async function sendChat() {
+  const msg = dom.chatInput.value.trim();
+  if (!msg) return;
+
+  dom.chatMessages.innerHTML += `<div class="text-right">${msg}</div>`;
+  dom.chatInput.value = "";
+
+  const res = await fetch(`${API_BASE}/chat`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ question: msg })
+  });
+
+  const data = await res.json();
+
+  dom.chatMessages.innerHTML += `<div class="text-gray-300">${data.reply}</div>`;
+  dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+}
+
+dom.sendBtn.onclick = sendChat;
+dom.chatInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendChat();
 });
-}
-
-function loadNodeDetails(node){
-
-dom.nodeTitle.innerText=node;
-dom.nodeExplain.innerHTML='<div class="spinner"></div>';
-dom.certsList.innerHTML="";
-dom.certHeader.classList.add("hidden");
-
-fetch(`${API_BASE}/explain`,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({topic:node})
-})
-.then(r=>r.json())
-.then(data=>{
-dom.nodeExplain.innerHTML=`<div>${data.explanation.replace(/\n/g,"<br>")}</div>`;
-});
-
-fetch(`${API_BASE}/node-certs`,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({node})
-})
-.then(r=>r.json())
-.then(data=>{
-
-dom.certHeader.classList.remove("hidden");
-
-let html="";
-
-html+=`<h4 class="text-green-400 font-bold mb-2">Free Courses</h4>`;
-html+=data.free_certifications.map(cert=>`
-<li>
-<a href="${cert.url}" target="_blank"
-class="block p-3 bg-gray-700 rounded mb-2">
-${cert.title}
-</a>
-</li>
-`).join("");
-
-html+=`<h4 class="text-yellow-400 font-bold mt-4 mb-2">Industry Certifications</h4>`;
-html+=data.industry_certifications.map(cert=>`
-<li>
-<a href="${cert.url}" target="_blank"
-class="block p-3 bg-gray-700 rounded mb-2 border border-yellow-500">
-${cert.title} — ${cert.provider}
-<span class="text-xs text-gray-400">(${cert.type})</span>
-</a>
-</li>
-`).join("");
-
-dom.certsList.innerHTML=html;
-
-});
-
-}
-
-async function handleChat(){
-
-const msg=dom.chatInput.value.trim();
-if(!msg) return;
-
-dom.chatMessages.innerHTML+=`<div class="bg-blue-600 p-2 rounded ml-auto max-w-[85%]">${msg}</div>`;
-dom.chatInput.value="";
-
-const res=await fetch(`${API_BASE}/chat`,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({question:msg})
-});
-
-const data=await res.json();
-
-dom.chatMessages.innerHTML+=`<div class="bg-gray-700 p-2 rounded max-w-[85%]">${data.reply}</div>`;
-dom.chatMessages.scrollTop=dom.chatMessages.scrollHeight;
-}
-
-dom.sendBtn.onclick=handleChat;
-dom.chatInput.addEventListener("keypress",(e)=>{if(e.key==="Enter")handleChat();});
 
 fetchSkills();
 
 </script>
+
 </body>
 </html>
