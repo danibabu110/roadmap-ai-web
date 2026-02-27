@@ -8,9 +8,9 @@ app = Flask(__name__)
 CORS(app)
 
 # ===============================
-# ENV (Vercel uses Environment Variables)
+# ENV VARIABLES
 # ===============================
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # ===============================
 # LOAD ROADMAP DATA
@@ -37,49 +37,69 @@ def generate_free_certs(topic):
     ]
 
 # ===============================
-# AI REQUEST (AUTO FALLBACK)
+# GEMINI REQUEST
 # ===============================
-def ask_openrouter(messages):
+def ask_gemini(messages):
 
-    if not OPENROUTER_API_KEY:
-        return "⚠️ AI not configured. Add OPENROUTER_API_KEY in Vercel."
+    if not GEMINI_API_KEY:
+        return "⚠️ Gemini API key not configured."
 
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://roadmap-ai-web.vercel.app",
-        "X-Title": "Roadmap AI Mentor"
-    }
+    try:
+        prompt = messages[-1]["content"]
 
-    models = [
-    "meta-llama/llama-3-8b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "openai/gpt-oss-120b:free"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
+
+        payload = {
+            "contents": [
+                {
+                    "parts": [{"text": prompt}]
+                }
+            ]
+        }
+
+        r = requests.post(url, json=payload, timeout=30)
+        result = r.json()
+
+        if "candidates" in result:
+            return result["candidates"][0]["content"]["parts"][0]["text"]
+
+        return "⚠️ Gemini busy. Try again."
+
+    except:
+        return "⚠️ Gemini request failed."
+
+# ===============================
+# AI INDUSTRY CERTS
+# ===============================
+def generate_ai_certifications(topic):
+
+    prompt = f"""
+Give industry-recognized certifications for learning {topic}.
+
+Return ONLY JSON list like:
+[
+  {{
+    "title":"Certificate name",
+    "provider":"Company",
+    "type":"Free or Paid",
+    "url":"official link"
+  }}
 ]
 
-    for model in models:
-        try:
-            payload = {
-                "model": model,
-                "messages": messages
-            }
+Include providers like:
+Google, AWS, Microsoft, IBM, Meta, Coursera, Udemy.
 
-            r = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
+Maximum 6 items.
+"""
 
-            result = r.json()
+    result = ask_gemini([
+        {"role": "user", "content": prompt}
+    ])
 
-            if "choices" in result:
-                return result["choices"][0]["message"]["content"]
-
-        except:
-            continue
-
-    return "⚠️ AI is busy right now. Please try again."
+    try:
+        return json.loads(result)
+    except:
+        return []
 
 # ===============================
 # ROUTES
@@ -105,15 +125,21 @@ def generate():
 @app.route("/api/node-certs", methods=["POST"])
 def node_certs():
     node = request.json.get("node", "")
-    return jsonify({"certifications": generate_free_certs(node)})
+
+    free_certs = generate_free_certs(node)
+    industry_certs = generate_ai_certifications(node)
+
+    return jsonify({
+        "free_certifications": free_certs,
+        "industry_certifications": industry_certs
+    })
 
 @app.route("/api/explain", methods=["POST"])
 def explain():
     topic = request.json.get("topic", "")
 
-    explanation = ask_openrouter([
-        {"role": "system", "content": "Explain shortly: What it is, Why important, How to learn, Time required."},
-        {"role": "user", "content": topic}
+    explanation = ask_gemini([
+        {"role": "user", "content": f"Explain shortly: What is {topic}, why important, how to learn, time required."}
     ])
 
     return jsonify({"explanation": explanation})
@@ -122,8 +148,7 @@ def explain():
 def chat():
     question = request.json.get("question", "")
 
-    reply = ask_openrouter([
-        {"role": "system", "content": "You are an AI learning mentor. Be concise and encouraging."},
+    reply = ask_gemini([
         {"role": "user", "content": question}
     ])
 
