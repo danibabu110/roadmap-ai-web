@@ -3,13 +3,16 @@ from flask_cors import CORS
 import json
 import os
 import requests
+from dotenv import load_dotenv
+
+# ===============================
+# LOAD ENV
+# ===============================
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# ===============================
-# ENV VARIABLES (SAFE)
-# ===============================
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 # ===============================
@@ -37,13 +40,12 @@ def generate_free_certs(topic):
     ]
 
 # ===============================
-# OPENROUTER REQUEST
+# AI REQUEST (AUTO FALLBACK)
 # ===============================
 def ask_openrouter(messages):
 
-    # Safe check
     if not OPENROUTER_API_KEY:
-        return "⚠️ AI not configured. Add OPENROUTER_API_KEY in Vercel Environment Variables."
+        return "⚠️ AI not configured. Add OPENROUTER_API_KEY in Vercel."
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -52,36 +54,38 @@ def ask_openrouter(messages):
         "X-Title": "Roadmap AI Mentor"
     }
 
-    payload = {
-        "model": "stepfun/step-3.5-flash:free",
-        "messages": messages
-    }
+    models = [
+        "stepfun/step-3.5-flash:free",
+        "openai/gpt-oss-120b:free"
+    ]
 
-    try:
-        r = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
+    for model in models:
+        try:
+            payload = {
+                "model": model,
+                "messages": messages
+            }
 
-        result = r.json()
+            r = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
 
-        if "choices" in result and len(result["choices"]) > 0:
-            return result["choices"][0]["message"]["content"]
+            result = r.json()
 
-        if "error" in result:
-            return f"⚠️ AI Error: {result['error'].get('message','Unknown error')}"
+            if "choices" in result:
+                return result["choices"][0]["message"]["content"]
 
-        return "⚠️ Unexpected AI response."
+        except:
+            continue
 
-    except Exception as e:
-        return f"⚠️ Server Error: {str(e)}"
+    return "⚠️ AI is busy right now. Please try again."
 
 # ===============================
 # ROUTES
 # ===============================
-
 @app.route("/api/")
 def home():
     return jsonify({"status": "Backend Running 🚀"})
@@ -110,10 +114,7 @@ def explain():
     topic = request.json.get("topic", "")
 
     explanation = ask_openrouter([
-        {
-            "role": "system",
-            "content": "Explain shortly: What it is, Why important, How to learn, Time required."
-        },
+        {"role": "system", "content": "Explain shortly: What it is, Why important, How to learn, Time required."},
         {"role": "user", "content": topic}
     ])
 
@@ -124,10 +125,7 @@ def chat():
     question = request.json.get("question", "")
 
     reply = ask_openrouter([
-        {
-            "role": "system",
-            "content": "You are an AI learning mentor. Be concise, clear and encouraging."
-        },
+        {"role": "system", "content": "You are an AI learning mentor. Be concise and encouraging."},
         {"role": "user", "content": question}
     ])
 
