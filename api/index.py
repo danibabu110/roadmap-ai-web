@@ -27,29 +27,11 @@ def normalize_skill(skill):
 def generate_free_certs(topic):
     q = topic.replace(" ", "%20")
     return [
-        {
-            "title": f"freeCodeCamp - {topic}",
-            "provider": "freeCodeCamp",
-            "type": "Free",
-            "url": f"https://www.freecodecamp.org/news/search/?query={q}"
-        },
-        {
-            "title": f"Coursera Free Courses - {topic}",
-            "provider": "Coursera",
-            "type": "Free",
-            "url": f"https://www.coursera.org/search?query={q}&price=free"
-        },
-        {
-            "title": f"edX Free Courses - {topic}",
-            "provider": "edX",
-            "type": "Free",
-            "url": f"https://www.edx.org/search?q={q}&price=free"
-        }
+        {"title": f"freeCodeCamp - {topic}", "url": f"https://www.freecodecamp.org/news/search/?query={q}"},
+        {"title": f"Coursera Free - {topic}", "url": f"https://www.coursera.org/search?query={q}&price=free"},
+        {"title": f"edX Free - {topic}", "url": f"https://www.edx.org/search?q={q}&price=free"}
     ]
 
-# ===============================
-# AI CALL
-# ===============================
 def ask_ai(messages):
 
     if not OPENROUTER_API_KEY:
@@ -72,62 +54,29 @@ def ask_ai(messages):
             json=payload,
             timeout=30
         )
+        data = r.json()
 
-        result = r.json()
-
-        if "choices" in result:
-            return result["choices"][0]["message"]["content"]
+        if "choices" in data:
+            return data["choices"][0]["message"]["content"]
 
         return "⚠️ AI busy."
 
     except:
-        return "⚠️ AI request failed."
-
-# ===============================
-# INDUSTRY CERTS (AI)
-# ===============================
-def generate_ai_certifications(topic):
-
-    prompt = f"""
-Give industry recognized certifications for {topic}.
-
-Return ONLY JSON:
-
-[
- {{
-  "title":"Certification",
-  "provider":"Company",
-  "type":"Industry Recognized",
-  "url":"official link"
- }}
-]
-Maximum 5.
-"""
-
-    result = ask_ai([
-        {"role":"user","content":prompt}
-    ])
-
-    try:
-        return json.loads(result)
-    except:
-        return []
+        return "⚠️ AI error."
 
 # ===============================
 # ROUTES
 # ===============================
-
 @app.route("/api/")
 def home():
     return jsonify({"status":"Backend Running 🚀"})
 
-@app.route("/api/skills", methods=["GET"])
+@app.route("/api/skills")
 def skills():
     return jsonify(list(ROADMAPS.keys()))
 
 @app.route("/api/generate", methods=["POST"])
 def generate():
-
     skill = normalize_skill(request.json.get("skill",""))
 
     if skill not in ROADMAPS:
@@ -137,34 +86,30 @@ def generate():
 
 @app.route("/api/node-certs", methods=["POST"])
 def node_certs():
-
     node = request.json.get("node","")
-
     return jsonify({
         "free_certifications": generate_free_certs(node),
-        "industry_certifications": generate_ai_certifications(node)
+        "industry_certifications":[]
     })
 
 @app.route("/api/explain", methods=["POST"])
 def explain():
-
     topic = request.json.get("topic","")
 
-    explanation = ask_ai([
+    text = ask_ai([
         {"role":"system","content":"Explain shortly: what it is, why important, how to learn."},
         {"role":"user","content":topic}
     ])
 
-    return jsonify({"explanation":explanation})
+    return jsonify({"explanation":text})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-
-    question = request.json.get("question","")
+    q = request.json.get("question","")
 
     reply = ask_ai([
-        {"role":"system","content":"You are an AI learning mentor."},
-        {"role":"user","content":question}
+        {"role":"system","content":"You are AI learning mentor."},
+        {"role":"user","content":q}
     ])
 
     return jsonify({"reply":reply})
