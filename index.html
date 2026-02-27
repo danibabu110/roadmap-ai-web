@@ -9,13 +9,11 @@
 
 <body class="bg-gray-900 text-white h-screen flex">
 
-<!-- SIDEBAR -->
 <aside class="w-64 bg-gray-800 p-4">
   <h1 class="text-xl font-bold mb-4">Roadmap AI</h1>
   <div id="skills-list">Loading skills...</div>
 </aside>
 
-<!-- MAIN -->
 <main class="flex-1 p-6">
   <h2 id="current-skill-title" class="text-2xl mb-4">Select Skill</h2>
   <div id="roadmap-container"></div>
@@ -30,26 +28,23 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyD4OUurLMulKg1-UPB92bYJBoo8_zkrHz8",
+  authDomain: "fake-news-detector-4f585.firebaseapp.com",
+  projectId: "fake-news-detector-4f585",
+  storageBucket: "fake-news-detector-4f585.firebasestorage.app",
+  messagingSenderId: "87660438732",
+  appId: "1:87660438732:web:3e56fd10a9ab54b2a04e69"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* WAIT FOR FIREBASE SESSION */
 onAuthStateChanged(auth,(user)=>{
-
   if(!user){
     window.location.href="/login.html";
     return;
   }
-
-  // LOAD APP ONLY AFTER LOGIN VERIFIED
   fetchSkills();
-
 });
 
 const API_BASE="/api";
