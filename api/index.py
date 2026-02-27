@@ -42,13 +42,13 @@ def generate_free_certs(topic):
 def ask_ai(messages):
 
     if not OPENROUTER_API_KEY:
-        return "⚠️ AI key not configured."
+        return "⚠️ AI not configured."
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://roadmap-ai-web.vercel.app",
-        "X-Title": "Roadmap AI Mentor"
+        "X-Title": "Roadmap AI"
     }
 
     payload = {
@@ -71,11 +71,11 @@ def ask_ai(messages):
 
         return "⚠️ AI temporarily unavailable."
 
-    except:
+    except Exception:
         return "⚠️ AI request failed."
 
 # ===============================
-# AI INDUSTRY CERTIFICATIONS
+# INDUSTRY CERTIFICATIONS (AI)
 # ===============================
 def generate_ai_certifications(topic):
 
@@ -84,22 +84,21 @@ Give industry-recognized certifications for learning {topic}.
 
 Return ONLY JSON list like:
 [
-  {{
-    "title":"Certificate name",
-    "provider":"Company",
-    "type":"Free or Paid",
-    "url":"official link"
-  }}
+ {{
+  "title":"Certificate name",
+  "provider":"Company",
+  "type":"Free or Paid",
+  "url":"official link"
+ }}
 ]
 
 Include providers:
 Google, AWS, Microsoft, IBM, Meta, Coursera, Udemy.
-
 Maximum 6 items.
 """
 
     result = ask_ai([
-        {"role": "user", "content": prompt}
+        {"role":"user","content":prompt}
     ])
 
     try:
@@ -110,27 +109,33 @@ Maximum 6 items.
 # ===============================
 # ROUTES
 # ===============================
+
 @app.route("/api/")
 def home():
-    return jsonify({"status": "Backend Running 🚀"})
+    return jsonify({"status":"Backend Running 🚀"})
 
+# ---------- SKILLS ----------
 @app.route("/api/skills", methods=["GET"])
 def skills():
     return jsonify(list(ROADMAPS.keys()))
 
+# ---------- ROADMAP ----------
 @app.route("/api/generate", methods=["POST"])
 def generate():
+
     data = request.json
-    skill = normalize_skill(data.get("skill", ""))
+    skill = normalize_skill(data.get("skill",""))
 
     if skill not in ROADMAPS:
-        return jsonify({"error": "Skill not found"}), 404
+        return jsonify({"error":"Skill not found"}),404
 
-    return jsonify({"roadmap": ROADMAPS[skill]})
+    return jsonify({"roadmap":ROADMAPS[skill]})
 
+# ---------- COURSES ----------
 @app.route("/api/node-certs", methods=["POST"])
 def node_certs():
-    node = request.json.get("node", "")
+
+    node = request.json.get("node","")
 
     free_certs = generate_free_certs(node)
     industry_certs = generate_ai_certifications(node)
@@ -140,27 +145,34 @@ def node_certs():
         "industry_certifications": industry_certs
     })
 
+# ---------- AI EXPLAIN ----------
 @app.route("/api/explain", methods=["POST"])
 def explain():
-    topic = request.json.get("topic", "")
+
+    topic = request.json.get("topic","")
 
     explanation = ask_ai([
-        {"role": "system", "content": "Explain shortly: What it is, Why important, How to learn, Time required."},
-        {"role": "user", "content": topic}
+        {"role":"system","content":"Explain shortly: What it is, Why important, How to learn, Time required."},
+        {"role":"user","content":topic}
     ])
 
-    return jsonify({"explanation": explanation})
+    return jsonify({"explanation":explanation})
 
+# ---------- AI CHAT ----------
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    question = request.json.get("question", "")
+
+    question = request.json.get("question","")
 
     reply = ask_ai([
-        {"role": "system", "content": "You are an AI learning mentor. Be concise and encouraging."},
-        {"role": "user", "content": question}
+        {"role":"system","content":"You are an AI learning mentor. Be concise and helpful."},
+        {"role":"user","content":question}
     ])
 
-    return jsonify({"reply": reply})
+    return jsonify({"reply":reply})
 
+# ===============================
+# LOCAL DEV
+# ===============================
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
