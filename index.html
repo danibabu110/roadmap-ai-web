@@ -1,137 +1,129 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import json
-import os
-import requests
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap AI Mentor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-app = Flask(__name__)
-CORS(app)
+<body class="bg-gray-900 text-white h-screen flex">
 
-# ===============================
-# ENV VARIABLES (SAFE)
-# ===============================
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+<!-- Sidebar -->
+<div class="w-64 bg-gray-800 p-4 overflow-y-auto">
+<h1 class="text-xl font-bold text-blue-400 mb-4">Roadmap AI</h1>
+<div id="skills-list">Loading skills...</div>
+</div>
 
-# ===============================
-# LOAD ROADMAP DATA
-# ===============================
-current_dir = os.path.dirname(os.path.abspath(__file__))
-roadmap_path = os.path.join(current_dir, "roadmaps_master.json")
+<!-- Main -->
+<div class="flex-1 flex flex-col">
+<header class="p-4 border-b border-gray-700 text-xl" id="title">
+Select Skill
+</header>
 
-with open(roadmap_path, "r", encoding="utf-8") as f:
-    ROADMAPS = json.load(f)
+<div class="flex-1 overflow-y-auto p-6" id="roadmap">
+Select a skill to begin.
+</div>
+</div>
 
-# ===============================
-# HELPERS
-# ===============================
-def normalize_skill(skill):
-    return skill.lower().replace(" ", "-").replace("_", "-")
+<!-- Right Panel -->
+<div class="w-96 bg-gray-800 flex flex-col border-l border-gray-700">
 
-def generate_free_certs(topic):
-    q = topic.replace(" ", "%20")
-    return [
-        {"title": f"freeCodeCamp - {topic}", "url": f"https://www.freecodecamp.org/news/search/?query={q}"},
-        {"title": f"Coursera Free Courses - {topic}", "url": f"https://www.coursera.org/search?query={q}&price=free"},
-        {"title": f"edX Free Courses - {topic}", "url": f"https://www.edx.org/search?q={q}&price=free"},
-        {"title": f"Google Digital Garage - {topic}", "url": f"https://learndigital.withgoogle.com/digitalgarage/search?q={q}"}
-    ]
+<div class="p-4 border-b border-gray-700">
+<h2 id="node-title" class="text-blue-400 font-bold">Topic Info</h2>
+</div>
 
-# ===============================
-# OPENROUTER REQUEST
-# ===============================
-def ask_openrouter(messages):
+<div id="node-info" class="p-4 flex-1 overflow-y-auto text-sm text-gray-300">
+Click a node.
+</div>
 
-    # Safe check
-    if not OPENROUTER_API_KEY:
-        return "⚠️ AI not configured. Add OPENROUTER_API_KEY in Vercel Environment Variables."
+<div class="p-3 border-t border-gray-700">
+<input id="chat-input" class="w-full p-2 rounded bg-gray-700" placeholder="Ask AI mentor...">
+<button id="send-btn" class="mt-2 w-full bg-blue-600 p-2 rounded">Send</button>
+</div>
 
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://roadmap-ai-web.vercel.app",
-        "X-Title": "Roadmap AI Mentor"
-    }
+<div id="chat-box" class="p-3 text-sm overflow-y-auto h-48"></div>
 
-    payload = {
-        "model": "stepfun/step-3.5-flash:free",
-        "messages": messages
-    }
+</div>
 
-    try:
-        r = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
+<script>
+const API="/api";
 
-        result = r.json()
+const skillsList=document.getElementById("skills-list");
+const roadmap=document.getElementById("roadmap");
+const title=document.getElementById("title");
+const nodeInfo=document.getElementById("node-info");
+const nodeTitle=document.getElementById("node-title");
+const chatInput=document.getElementById("chat-input");
+const chatBox=document.getElementById("chat-box");
 
-        if "choices" in result and len(result["choices"]) > 0:
-            return result["choices"][0]["message"]["content"]
+async function fetchSkills(){
+ const r=await fetch(API+"/skills");
+ const skills=await r.json();
+ skillsList.innerHTML="";
+ skills.forEach(s=>{
+   const b=document.createElement("button");
+   b.className="block w-full text-left p-2 hover:bg-gray-700 rounded capitalize";
+   b.innerText=s;
+   b.onclick=()=>loadRoadmap(s);
+   skillsList.appendChild(b);
+ });
+}
 
-        if "error" in result:
-            return f"⚠️ AI Error: {result['error'].get('message','Unknown error')}"
+async function loadRoadmap(skill){
+ title.innerText=skill;
+ roadmap.innerHTML="Loading...";
+ const r=await fetch(API+"/generate",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({skill})
+ });
+ const data=await r.json();
 
-        return "⚠️ Unexpected AI response."
+ roadmap.innerHTML="";
+ data.roadmap.nodes.forEach(n=>{
+   const btn=document.createElement("button");
+   btn.className="block w-full mb-2 p-3 bg-gray-800 hover:bg-gray-700 rounded";
+   btn.innerText=n;
+   btn.onclick=()=>loadNode(n);
+   roadmap.appendChild(btn);
+ });
+}
 
-    except Exception as e:
-        return f"⚠️ Server Error: {str(e)}"
+async function loadNode(node){
+ nodeTitle.innerText=node;
+ nodeInfo.innerText="Loading AI...";
 
-# ===============================
-# ROUTES
-# ===============================
+ const r=await fetch(API+"/explain",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({topic:node})
+ });
 
-@app.route("/api/")
-def home():
-    return jsonify({"status": "Backend Running 🚀"})
+ const data=await r.json();
+ nodeInfo.innerText=data.explanation;
+}
 
-@app.route("/api/skills", methods=["GET"])
-def skills():
-    return jsonify(list(ROADMAPS.keys()))
+document.getElementById("send-btn").onclick=async()=>{
+ const msg=chatInput.value.trim();
+ if(!msg) return;
 
-@app.route("/api/generate", methods=["POST"])
-def generate():
-    data = request.json
-    skill = normalize_skill(data.get("skill", ""))
+ chatBox.innerHTML+=`<div class="mb-2 text-blue-300">You: ${msg}</div>`;
+ chatInput.value="";
 
-    if skill not in ROADMAPS:
-        return jsonify({"error": "Skill not found"}), 404
+ const r=await fetch(API+"/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({question:msg})
+ });
 
-    return jsonify({"roadmap": ROADMAPS[skill]})
+ const data=await r.json();
+ chatBox.innerHTML+=`<div class="mb-2 text-gray-300">AI: ${data.reply}</div>`;
+ chatBox.scrollTop=chatBox.scrollHeight;
+};
 
-@app.route("/api/node-certs", methods=["POST"])
-def node_certs():
-    node = request.json.get("node", "")
-    return jsonify({"certifications": generate_free_certs(node)})
+fetchSkills();
+</script>
 
-@app.route("/api/explain", methods=["POST"])
-def explain():
-    topic = request.json.get("topic", "")
-
-    explanation = ask_openrouter([
-        {
-            "role": "system",
-            "content": "Explain shortly: What it is, Why important, How to learn, Time required."
-        },
-        {"role": "user", "content": topic}
-    ])
-
-    return jsonify({"explanation": explanation})
-
-@app.route("/api/chat", methods=["POST"])
-def chat():
-    question = request.json.get("question", "")
-
-    reply = ask_openrouter([
-        {
-            "role": "system",
-            "content": "You are an AI learning mentor. Be concise, clear and encouraging."
-        },
-        {"role": "user", "content": question}
-    ])
-
-    return jsonify({"reply": reply})
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+</body>
+</html>
