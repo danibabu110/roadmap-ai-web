@@ -62,7 +62,7 @@ Roadmap AI
 
 <div class="p-4 border-t border-[#1E293B] flex justify-between items-center">
 <span id="user-email" class="text-xs text-gray-400"></span>
-<button id="logoutBtn" class="text-red-400 text-sm">Logout</button>
+<button id="logout-btn" class="text-red-400 text-sm">Logout</button>
 </div>
 </aside>
 
@@ -133,20 +133,31 @@ const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
+/* DOM */
+const skillsList=document.getElementById("skills-list");
+const roadmapContainer=document.getElementById("roadmap-container");
+const emptyState=document.getElementById("empty-state");
+const skillTitle=document.getElementById("current-skill-title");
+const userEmail=document.getElementById("user-email");
+const logoutBtn=document.getElementById("logout-btn");
+
+const nodeTitle=document.getElementById("node-title");
+const nodeExplain=document.getElementById("node-explain-content");
+const nodeCerts=document.getElementById("node-certs-list");
+
+const chatInput=document.getElementById("chat-input");
+const chatMessages=document.getElementById("chat-messages");
+
 let userProgress={};
 let currentSkill=null;
 
 onAuthStateChanged(auth,user=>{
-if(!user){
-location.href="login.html";
-return;
-}
+if(!user){ location.href="login.html"; return; }
 
-document.getElementById("user-email").innerText=user.email;
+userEmail.innerText=user.email;
 
-const userRef=doc(db,"users",user.uid);
-
-onSnapshot(userRef,(snap)=>{
+const ref=doc(db,"users",user.uid);
+onSnapshot(ref,snap=>{
 if(snap.exists()){
 userProgress=snap.data().completedNodes||{};
 if(currentSkill) loadRoadmap(currentSkill);
@@ -156,29 +167,27 @@ if(currentSkill) loadRoadmap(currentSkill);
 
 logoutBtn.onclick=()=>signOut(auth);
 
-/* ================= API ================= */
-
+/* API */
 const API="/api";
 
 async function loadSkills(){
 const skills=await fetch(API+"/skills").then(r=>r.json());
-const list=document.getElementById("skills-list");
 
 skills.forEach(s=>{
 const b=document.createElement("button");
 b.className="w-full text-left p-3 rounded hover:bg-[#111827] capitalize";
 b.innerText=s.replace(/-/g," ");
 b.onclick=()=>loadRoadmap(s);
-list.appendChild(b);
+skillsList.appendChild(b);
 });
 }
 
 async function loadRoadmap(skill){
 currentSkill=skill;
 
-empty-state.classList.add("hidden");
-roadmap-container.classList.remove("hidden");
-current-skill-title.innerText=skill.replace(/-/g," ");
+emptyState.classList.add("hidden");
+roadmapContainer.classList.remove("hidden");
+skillTitle.innerText=skill.replace(/-/g," ");
 
 const data=await fetch(API+"/generate",{
 method:"POST",
@@ -190,40 +199,33 @@ renderNodes(skill,data.roadmap.nodes);
 }
 
 function renderNodes(skill,nodes){
-roadmap-container.innerHTML="";
+roadmapContainer.innerHTML="";
 
 nodes.forEach(n=>{
 const key=`${skill}_${n}`;
 const done=userProgress[key];
 
 const div=document.createElement("div");
-
-div.className=
-`timeline-node relative p-4 mb-4 glass rounded-xl cursor-pointer
-${done?"border-green-500 bg-green-500/10":"hover:border-indigo-500"}`;
-
+div.className=`timeline-node relative p-4 mb-4 glass rounded-xl cursor-pointer ${done?"border-green-500 bg-green-500/10":"hover:border-indigo-500"}`;
 div.innerHTML=`<h4 class="font-bold">${done?"✔ ":""}${n}</h4>`;
 
 div.onclick=async()=>{
 userProgress[key]=!userProgress[key];
 
-await setDoc(
-doc(db,"users",auth.currentUser.uid),
-{completedNodes:userProgress},
-{merge:true}
-);
+await setDoc(doc(db,"users",auth.currentUser.uid),
+{completedNodes:userProgress},{merge:true});
 
 loadNode(n);
 loadRoadmap(skill);
 };
 
-roadmap-container.appendChild(div);
+roadmapContainer.appendChild(div);
 });
 }
 
 async function loadNode(node){
-node-title.innerText=node;
-node-explain-content.innerHTML="Loading...";
+nodeTitle.innerText=node;
+nodeExplain.innerHTML="Loading...";
 
 const explain=await fetch(API+"/explain",{
 method:"POST",
@@ -231,7 +233,7 @@ headers:{'Content-Type':'application/json'},
 body:JSON.stringify({topic:node})
 }).then(r=>r.json());
 
-node-explain-content.innerHTML=explain.explanation.replace(/\n/g,"<br>");
+nodeExplain.innerHTML=explain.explanation.replace(/\n/g,"<br>");
 
 const certs=await fetch(API+"/node-certs",{
 method:"POST",
@@ -239,20 +241,19 @@ headers:{'Content-Type':'application/json'},
 body:JSON.stringify({node})
 }).then(r=>r.json());
 
-node-certs-list.innerHTML=certs.certifications
+nodeCerts.innerHTML=certs.certifications
 .map(c=>`<li><a class="text-indigo-400" target="_blank" href="${c.url}">${c.title}</a></li>`)
 .join("");
 }
 
-/* ================= CHAT ================= */
-
-chat-input.addEventListener("keypress",async e=>{
+/* CHAT */
+chatInput.addEventListener("keypress",async e=>{
 if(e.key==="Enter"){
-const q=chat-input.value.trim();
+const q=chatInput.value.trim();
 if(!q) return;
 
-chat-messages.innerHTML+=`<div class="ml-auto glass p-3 rounded-xl">${q}</div>`;
-chat-input.value="";
+chatMessages.innerHTML+=`<div class="ml-auto glass p-3 rounded-xl">${q}</div>`;
+chatInput.value="";
 
 const d=await fetch(API+"/chat",{
 method:"POST",
@@ -260,8 +261,8 @@ headers:{'Content-Type':'application/json'},
 body:JSON.stringify({question:q})
 }).then(r=>r.json());
 
-chat-messages.innerHTML+=`<div class="glass p-3 rounded-xl">${d.reply}</div>`;
-chat-messages.scrollTop=chat-messages.scrollHeight;
+chatMessages.innerHTML+=`<div class="glass p-3 rounded-xl">${d.reply}</div>`;
+chatMessages.scrollTop=chatMessages.scrollHeight;
 }
 });
 
