@@ -27,17 +27,39 @@ with open(roadmap_path, "r", encoding="utf-8") as f:
 def normalize_skill(skill):
     return skill.lower().replace(" ", "-").replace("_", "-")
 
+# ---------- FREE CERTIFICATIONS ----------
 def generate_free_certs(topic):
     q = topic.replace(" ", "%20")
+
     return [
-        {"title": f"freeCodeCamp - {topic}", "url": f"https://www.freecodecamp.org/news/search/?query={q}"},
-        {"title": f"Coursera Free Courses - {topic}", "url": f"https://www.coursera.org/search?query={q}&price=free"},
-        {"title": f"edX Free Courses - {topic}", "url": f"https://www.edx.org/search?q={q}&price=free"},
-        {"title": f"Google Digital Garage - {topic}", "url": f"https://learndigital.withgoogle.com/digitalgarage/search?q={q}"}
+        {
+            "title": f"freeCodeCamp - {topic}",
+            "provider": "freeCodeCamp",
+            "type": "Free",
+            "url": f"https://www.freecodecamp.org/news/search/?query={q}"
+        },
+        {
+            "title": f"Coursera Free Courses - {topic}",
+            "provider": "Coursera",
+            "type": "Free",
+            "url": f"https://www.coursera.org/search?query={q}&price=free"
+        },
+        {
+            "title": f"edX Free Courses - {topic}",
+            "provider": "edX",
+            "type": "Free",
+            "url": f"https://www.edx.org/search?q={q}&price=free"
+        },
+        {
+            "title": f"Google Digital Garage - {topic}",
+            "provider": "Google",
+            "type": "Free",
+            "url": f"https://learndigital.withgoogle.com/digitalgarage/search?q={q}"
+        }
     ]
 
 # ===============================
-# AI REQUEST (OPENROUTER FREE)
+# AI REQUEST (OPENROUTER)
 # ===============================
 def ask_ai(messages):
 
@@ -74,31 +96,32 @@ def ask_ai(messages):
     except Exception:
         return "⚠️ AI request failed."
 
-# ===============================
-# INDUSTRY CERTIFICATIONS (AI)
-# ===============================
+# ---------- INDUSTRY CERTIFICATIONS ----------
 def generate_ai_certifications(topic):
 
     prompt = f"""
-Give industry-recognized certifications for learning {topic}.
+Give ONLY INDUSTRY-RECOGNIZED certifications for learning {topic}.
 
-Return ONLY JSON list like:
+Return STRICT JSON format:
+
 [
  {{
-  "title":"Certificate name",
-  "provider":"Company",
-  "type":"Free or Paid",
-  "url":"official link"
+   "title":"Certification name",
+   "provider":"Company",
+   "type":"Industry Recognized",
+   "url":"official link"
  }}
 ]
 
-Include providers:
-Google, AWS, Microsoft, IBM, Meta, Coursera, Udemy.
-Maximum 6 items.
+Use providers:
+Google, AWS, Microsoft, IBM, Meta, Oracle, Cisco.
+
+Maximum 6 certifications.
+Return ONLY JSON.
 """
 
     result = ask_ai([
-        {"role":"user","content":prompt}
+        {"role": "user", "content": prompt}
     ])
 
     try:
@@ -112,30 +135,30 @@ Maximum 6 items.
 
 @app.route("/api/")
 def home():
-    return jsonify({"status":"Backend Running 🚀"})
+    return jsonify({"status": "Backend Running 🚀"})
 
 # ---------- SKILLS ----------
 @app.route("/api/skills", methods=["GET"])
 def skills():
     return jsonify(list(ROADMAPS.keys()))
 
-# ---------- ROADMAP ----------
+# ---------- GENERATE ROADMAP ----------
 @app.route("/api/generate", methods=["POST"])
 def generate():
 
     data = request.json
-    skill = normalize_skill(data.get("skill",""))
+    skill = normalize_skill(data.get("skill", ""))
 
     if skill not in ROADMAPS:
-        return jsonify({"error":"Skill not found"}),404
+        return jsonify({"error": "Skill not found"}), 404
 
-    return jsonify({"roadmap":ROADMAPS[skill]})
+    return jsonify({"roadmap": ROADMAPS[skill]})
 
-# ---------- COURSES ----------
+# ---------- CERTIFICATIONS ----------
 @app.route("/api/node-certs", methods=["POST"])
 def node_certs():
 
-    node = request.json.get("node","")
+    node = request.json.get("node", "")
 
     free_certs = generate_free_certs(node)
     industry_certs = generate_ai_certifications(node)
@@ -149,27 +172,33 @@ def node_certs():
 @app.route("/api/explain", methods=["POST"])
 def explain():
 
-    topic = request.json.get("topic","")
+    topic = request.json.get("topic", "")
 
     explanation = ask_ai([
-        {"role":"system","content":"Explain shortly: What it is, Why important, How to learn, Time required."},
-        {"role":"user","content":topic}
+        {
+            "role": "system",
+            "content": "Explain in short sections: What it is, Why important, How to learn, Time required."
+        },
+        {"role": "user", "content": topic}
     ])
 
-    return jsonify({"explanation":explanation})
+    return jsonify({"explanation": explanation})
 
 # ---------- AI CHAT ----------
 @app.route("/api/chat", methods=["POST"])
 def chat():
 
-    question = request.json.get("question","")
+    question = request.json.get("question", "")
 
     reply = ask_ai([
-        {"role":"system","content":"You are an AI learning mentor. Be concise and helpful."},
-        {"role":"user","content":question}
+        {
+            "role": "system",
+            "content": "You are an AI learning mentor. Be concise and encouraging."
+        },
+        {"role": "user", "content": question}
     ])
 
-    return jsonify({"reply":reply})
+    return jsonify({"reply": reply})
 
 # ===============================
 # LOCAL DEV
