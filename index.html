@@ -1,226 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Roadmap AI Dashboard</title>
+<title>Roadmap AI</title>
 <script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-body { overflow:hidden; }
-.spinner{
-  border:3px solid rgba(255,255,255,0.1);
-  border-top-color:#3b82f6;
-  border-radius:50%;
-  width:20px;height:20px;
-  animation:spin 1s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
 </head>
 
-<body class="bg-gray-900 text-white h-screen flex">
+<body class="bg-gray-900 text-white flex h-screen">
 
-<!-- SIDEBAR -->
-<aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-  <div class="p-4 border-b border-gray-700">
-    <h1 class="text-xl font-bold text-blue-400">Roadmap AI</h1>
-  </div>
-
-  <div id="skills-list" class="flex-1 overflow-y-auto p-3 space-y-2">
-    <div class="text-gray-400 text-sm">Loading skills...</div>
-  </div>
+<aside class="w-64 bg-gray-800 p-4">
+<h1 class="text-xl mb-4">Roadmap AI</h1>
+<div id="skills-list">Loading...</div>
 </aside>
 
-<!-- MAIN -->
-<main class="flex-1 flex flex-col">
-
-<header class="p-4 border-b border-gray-700 bg-gray-900">
-  <h2 id="current-skill-title" class="text-xl font-semibold">
-    Select Skill
-  </h2>
-</header>
-
-<div class="flex-1 overflow-y-auto p-6">
-  <div id="roadmap-container" class="max-w-md mx-auto space-y-3">
-    <p class="text-gray-500">Select a skill to start.</p>
-  </div>
-</div>
-
+<main class="flex-1 p-6">
+<h2 id="current-skill-title">Select Skill</h2>
+<div id="roadmap-container" class="mt-4"></div>
 </main>
 
-<!-- RIGHT PANEL -->
-<aside class="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
+<aside class="w-96 bg-gray-800 p-4">
+<h3 id="node-title">Topic Info</h3>
+<div id="node-explain-content">Click node</div>
 
-<!-- NODE INFO -->
-<div class="p-4 border-b border-gray-700">
-  <h3 id="node-title" class="text-lg font-bold text-blue-400">
-    Topic Info
-  </h3>
-  <div id="node-explain-content" class="text-sm text-gray-300 mt-2">
-    Click a node.
-  </div>
+<div class="mt-4">
+<input id="chat-input" class="w-full bg-gray-700 p-2 rounded">
+<button id="send-btn" class="mt-2 bg-blue-600 px-3 py-1 rounded">
+Send
+</button>
+<div id="chat-messages" class="mt-2"></div>
 </div>
-
-<!-- CHAT -->
-<div class="flex-1 flex flex-col p-4">
-  <h4 class="font-semibold mb-2">AI Mentor</h4>
-
-  <div id="chat-messages"
-    class="flex-1 overflow-y-auto space-y-2 text-sm mb-2">
-  </div>
-
-  <div class="flex gap-2">
-    <input id="chat-input"
-      class="flex-1 bg-gray-700 p-2 rounded text-sm"
-      placeholder="Ask AI mentor...">
-
-    <button id="send-btn"
-      class="bg-blue-600 px-3 rounded hover:bg-blue-500">
-      Send
-    </button>
-  </div>
-</div>
-
 </aside>
 
-<script type="module">
-
-/* =========================
-   FIREBASE AUTH
-========================= */
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD4OUurLMulKg1-UPB92bYJBoo8_zkrHz8",
-  authDomain: "fake-news-detector-4f585.firebaseapp.com",
-  projectId: "fake-news-detector-4f585",
-  appId: "1:87660438732:web:3e56fd10a9ab54b2a04e69"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-onAuthStateChanged(auth,(user)=>{
-  if(!user){
-    window.location.href="/login.html";
-    return;
-  }
-  fetchSkills();
-});
-
-/* =========================
-   APP LOGIC
-========================= */
+<script>
 
 const API_BASE = window.location.origin + "/api";
 
 const dom={
-  skillsList:document.getElementById("skills-list"),
-  roadmap:document.getElementById("roadmap-container"),
-  skillTitle:document.getElementById("current-skill-title"),
-  nodeTitle:document.getElementById("node-title"),
-  nodeExplain:document.getElementById("node-explain-content"),
-  chatMessages:document.getElementById("chat-messages"),
-  chatInput:document.getElementById("chat-input"),
-  sendBtn:document.getElementById("send-btn")
+skillsList:document.getElementById("skills-list"),
+roadmap:document.getElementById("roadmap-container"),
+skillTitle:document.getElementById("current-skill-title"),
+nodeTitle:document.getElementById("node-title"),
+nodeExplain:document.getElementById("node-explain-content"),
+chatInput:document.getElementById("chat-input"),
+chatMessages:document.getElementById("chat-messages")
 };
 
-/* LOAD SKILLS */
 async function fetchSkills(){
-  try{
-    const res=await fetch(API_BASE+"/skills");
-    const skills=await res.json();
+const res=await fetch(API_BASE+"/skills");
+const skills=await res.json();
 
-    dom.skillsList.innerHTML="";
-
-    skills.forEach(skill=>{
-      const btn=document.createElement("button");
-      btn.className="block w-full text-left p-2 rounded hover:bg-gray-700 capitalize";
-      btn.innerText=skill;
-      btn.onclick=()=>loadRoadmap(skill);
-      dom.skillsList.appendChild(btn);
-    });
-
-  }catch{
-    dom.skillsList.innerHTML="<p class='text-red-400'>Failed loading skills</p>";
-  }
+dom.skillsList.innerHTML="";
+skills.forEach(s=>{
+let b=document.createElement("button");
+b.innerText=s;
+b.className="block p-2 hover:bg-gray-700 w-full text-left";
+b.onclick=()=>loadRoadmap(s);
+dom.skillsList.appendChild(b);
+});
 }
 
-/* LOAD ROADMAP */
 async function loadRoadmap(skill){
 
-  dom.skillTitle.innerText=skill;
-  dom.roadmap.innerHTML="<div class='spinner'></div>";
+dom.skillTitle.innerText=skill;
 
-  const res=await fetch(API_BASE+"/generate",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({skill})
-  });
-
-  const data=await res.json();
-
-  dom.roadmap.innerHTML="";
-
-  data.roadmap.nodes.forEach(node=>{
-    const btn=document.createElement("button");
-    btn.className="w-full bg-gray-800 border border-blue-500 p-3 rounded hover:bg-gray-700";
-    btn.innerText=node;
-    btn.onclick=()=>loadNode(node);
-    dom.roadmap.appendChild(btn);
-  });
-}
-
-/* LOAD NODE INFO */
-async function loadNode(node){
-
-  dom.nodeTitle.innerText=node;
-  dom.nodeExplain.innerHTML="<div class='spinner'></div>";
-
-  const res=await fetch(API_BASE+"/explain",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({topic:node})
-  });
-
-  const data=await res.json();
-  dom.nodeExplain.innerText=data.explanation;
-}
-
-/* CHAT */
-async function sendChat(){
-
-  const msg=dom.chatInput.value.trim();
-  if(!msg)return;
-
-  dom.chatMessages.innerHTML +=
-    `<div class="text-right text-blue-300">${msg}</div>`;
-
-  dom.chatInput.value="";
-
-  const res=await fetch(API_BASE+"/chat",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({question:msg})
-  });
-
-  const data=await res.json();
-
-  dom.chatMessages.innerHTML +=
-    `<div class="text-gray-300">${data.reply}</div>`;
-
-  dom.chatMessages.scrollTop=dom.chatMessages.scrollHeight;
-}
-
-dom.sendBtn.onclick=sendChat;
-dom.chatInput.addEventListener("keypress",(e)=>{
-  if(e.key==="Enter")sendChat();
+const res=await fetch(API_BASE+"/generate",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({skill})
 });
 
-</script>
+const data=await res.json();
 
+dom.roadmap.innerHTML="";
+
+data.roadmap.nodes.forEach(n=>{
+let b=document.createElement("button");
+b.className="block bg-gray-700 p-2 rounded mb-2 w-full";
+b.innerText=n;
+b.onclick=()=>loadNode(n);
+dom.roadmap.appendChild(b);
+});
+}
+
+async function loadNode(node){
+
+dom.nodeTitle.innerText=node;
+
+const explainRes=await fetch(API_BASE+"/explain",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({topic:node})
+});
+
+const explainData=await explainRes.json();
+
+const certRes=await fetch(API_BASE+"/node-certs",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({node})
+});
+
+const certData=await certRes.json();
+
+let html=`<p>${explainData.explanation}</p>
+<h4 class='mt-3 text-blue-400'>Free Certifications</h4>`;
+
+certData.free_certifications.forEach(c=>{
+html += `<a href="${c.url}" target="_blank" class="block bg-gray-700 p-2 mt-1 rounded">${c.title}</a>`;
+});
+
+html += `<h4 class='mt-3 text-green-400'>Industry Certifications</h4>`;
+
+certData.industry_certifications.forEach(c=>{
+html += `<a href="${c.url}" target="_blank" class="block bg-gray-700 p-2 mt-1 rounded">${c.title}</a>`;
+});
+
+dom.nodeExplain.innerHTML=html;
+}
+
+document.getElementById("send-btn").onclick=async()=>{
+
+const msg=dom.chatInput.value;
+if(!msg)return;
+
+dom.chatMessages.innerHTML+=`<div>You: ${msg}</div>`;
+dom.chatInput.value="";
+
+const res=await fetch(API_BASE+"/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({question:msg})
+});
+
+const data=await res.json();
+
+dom.chatMessages.innerHTML+=`<div>AI: ${data.reply}</div>`;
+};
+
+fetchSkills();
+
+</script>
 </body>
 </html>
