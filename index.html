@@ -4,78 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roadmap AI</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-body { overflow: hidden; }
-.spinner {
-  border: 3px solid rgba(255,255,255,0.1);
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
 </head>
 
-<body class="bg-gray-900 text-gray-100 h-screen flex">
+<body class="bg-gray-900 text-white h-screen flex">
 
 <!-- SIDEBAR -->
-<aside class="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">
-  <h1 class="text-xl font-bold text-blue-400 mb-4">Roadmap AI</h1>
-  <div id="skills-list" class="space-y-2 text-sm">
-    <div class="text-gray-400">Loading skills...</div>
-  </div>
+<aside class="w-64 bg-gray-800 p-4">
+  <h1 class="text-xl font-bold mb-4">Roadmap AI</h1>
+  <div id="skills-list">Loading skills...</div>
 </aside>
 
 <!-- MAIN -->
-<main class="flex-1 flex flex-col">
-
-<header class="p-4 border-b border-gray-700 bg-gray-900">
-  <h2 id="current-skill-title" class="text-xl font-semibold">Select Skill</h2>
-</header>
-
-<div class="flex-1 overflow-y-auto p-6">
-  <div id="roadmap-container" class="max-w-md mx-auto space-y-4">
-    <p class="text-gray-500">Select a skill to begin.</p>
-  </div>
-</div>
-
+<main class="flex-1 p-6">
+  <h2 id="current-skill-title" class="text-2xl mb-4">Select Skill</h2>
+  <div id="roadmap-container"></div>
 </main>
 
-<!-- RIGHT PANEL -->
-<aside class="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
-
-<div class="p-4 border-b border-gray-700">
-  <h3 id="node-title" class="text-lg font-bold text-blue-400">Topic Info</h3>
-  <div id="node-explain-content" class="text-sm mt-2 text-gray-300">
-    Click a node.
-  </div>
-</div>
-
-<div class="p-4 border-t border-gray-700 flex flex-col h-64">
-  <div class="font-semibold text-sm mb-2">AI Mentor</div>
-  <div id="chat-messages" class="flex-1 overflow-y-auto text-sm space-y-2 mb-2"></div>
-  <div class="flex gap-2">
-    <input id="chat-input" class="flex-1 bg-gray-700 p-2 rounded text-sm" placeholder="Ask AI mentor...">
-    <button id="send-btn" class="bg-blue-600 px-3 rounded">Send</button>
-  </div>
-</div>
-
-</aside>
-
-<!-- FIREBASE + APP -->
 <script type="module">
 
-/* ===============================
-   FIREBASE AUTH CHECK
-================================= */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "YOUR_FIREBASE_KEY",
@@ -87,112 +39,59 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "/login.html";
+/* WAIT FOR FIREBASE SESSION */
+onAuthStateChanged(auth,(user)=>{
+
+  if(!user){
+    window.location.href="/login.html";
+    return;
   }
+
+  // LOAD APP ONLY AFTER LOGIN VERIFIED
+  fetchSkills();
+
 });
 
-/* ===============================
-   APP LOGIC
-================================= */
+const API_BASE="/api";
 
-const API_BASE = "/api";
+async function fetchSkills(){
+  const res=await fetch(API_BASE+"/skills");
+  const skills=await res.json();
 
-const dom = {
-  skillsList: document.getElementById("skills-list"),
-  roadmapContainer: document.getElementById("roadmap-container"),
-  skillTitle: document.getElementById("current-skill-title"),
-  nodeTitle: document.getElementById("node-title"),
-  nodeExplain: document.getElementById("node-explain-content"),
-  chatMessages: document.getElementById("chat-messages"),
-  chatInput: document.getElementById("chat-input"),
-  sendBtn: document.getElementById("send-btn")
-};
+  const list=document.getElementById("skills-list");
+  list.innerHTML="";
 
-async function fetchSkills() {
-  const res = await fetch(`${API_BASE}/skills`);
-  const skills = await res.json();
-
-  dom.skillsList.innerHTML = "";
-
-  skills.forEach(skill => {
-    const btn = document.createElement("button");
-    btn.className = "block w-full text-left p-2 rounded hover:bg-gray-700 capitalize";
-    btn.innerText = skill;
-    btn.onclick = () => loadRoadmap(skill);
-    dom.skillsList.appendChild(btn);
+  skills.forEach(skill=>{
+    const btn=document.createElement("button");
+    btn.className="block w-full text-left p-2 hover:bg-gray-700";
+    btn.innerText=skill;
+    btn.onclick=()=>loadRoadmap(skill);
+    list.appendChild(btn);
   });
 }
 
-async function loadRoadmap(skill) {
-  dom.skillTitle.innerText = skill;
-  dom.roadmapContainer.innerHTML = "<div class='spinner'></div>";
+async function loadRoadmap(skill){
+  document.getElementById("current-skill-title").innerText=skill;
 
-  const res = await fetch(`${API_BASE}/generate`, {
+  const res=await fetch(API_BASE+"/generate",{
     method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ skill })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({skill})
   });
 
-  const data = await res.json();
+  const data=await res.json();
 
-  dom.roadmapContainer.innerHTML = "";
+  const container=document.getElementById("roadmap-container");
+  container.innerHTML="";
 
-  data.roadmap.nodes.forEach(node => {
-    const btn = document.createElement("button");
-    btn.className = "w-full bg-gray-800 border border-blue-500 p-3 rounded hover:bg-gray-700";
-    btn.innerText = node;
-    btn.onclick = () => loadNode(node);
-    dom.roadmapContainer.appendChild(btn);
+  data.roadmap.nodes.forEach(n=>{
+    const div=document.createElement("div");
+    div.className="p-3 bg-gray-800 rounded mb-2";
+    div.innerText=n;
+    container.appendChild(div);
   });
 }
-
-async function loadNode(node) {
-  dom.nodeTitle.innerText = node;
-  dom.nodeExplain.innerHTML = "<div class='spinner'></div>";
-
-  const res = await fetch(`${API_BASE}/explain`, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ topic: node })
-  });
-
-  const data = await res.json();
-  dom.nodeExplain.innerText = data.explanation;
-}
-
-/* ===============================
-   CHAT
-================================= */
-
-async function sendChat() {
-  const msg = dom.chatInput.value.trim();
-  if (!msg) return;
-
-  dom.chatMessages.innerHTML += `<div class="text-right">${msg}</div>`;
-  dom.chatInput.value = "";
-
-  const res = await fetch(`${API_BASE}/chat`, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ question: msg })
-  });
-
-  const data = await res.json();
-
-  dom.chatMessages.innerHTML += `<div class="text-gray-300">${data.reply}</div>`;
-  dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
-}
-
-dom.sendBtn.onclick = sendChat;
-dom.chatInput.addEventListener("keypress", e => {
-  if (e.key === "Enter") sendChat();
-});
-
-fetchSkills();
 
 </script>
-
 </body>
 </html>
