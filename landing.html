@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{background:#03040B;color:#fff;overflow:hidden;}
+.bg-grid{
+background-size:30px 30px;
+background-image:
+linear-gradient(to right,rgba(255,255,255,.02) 1px,transparent 1px),
+linear-gradient(to bottom,rgba(255,255,255,.02) 1px,transparent 1px);
+}
+.glass{
+backdrop-filter:blur(14px);
+background:rgba(11,15,25,.55);
+border:1px solid #1E293B;
+}
+.float{animation:float 6s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+</style>
+</head>
+
+<body class="h-screen relative">
+<div class="absolute inset-0 bg-grid"></div>
+
+<section class="relative z-10 text-center pt-24">
+<h1 class="text-6xl font-bold text-indigo-400">Roadmap AI</h1>
+<p class="text-gray-400 mt-4 max-w-2xl mx-auto">
+AI-powered learning paths, mentor guidance, and industry-ready career roadmaps.
+</p>
+
+<button onclick="location.href='login.html'"
+class="mt-8 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold">
+Get Started
+</button>
+</section>
+
+<div class="relative z-10 grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-16 px-6">
+<div class="glass p-6 rounded-2xl float">
+<h3 class="text-lg font-bold text-indigo-300 mb-2">AI Roadmaps</h3>
+<p class="text-gray-400 text-sm">Structured learning paths for every tech career.</p>
+</div>
+
+<div class="glass p-6 rounded-2xl float">
+<h3 class="text-lg font-bold text-indigo-300 mb-2">AI Mentor</h3>
+<p class="text-gray-400 text-sm">Ask questions and get instant guidance.</p>
+</div>
+
+<div class="glass p-6 rounded-2xl float">
+<h3 class="text-lg font-bold text-indigo-300 mb-2">Track Progress</h3>
+<p class="text-gray-400 text-sm">Mark nodes complete and track your journey.</p>
+</div>
+</div>
+
+</body>
+</html>

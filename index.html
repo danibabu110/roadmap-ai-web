@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap AI Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+background:#03040B;
+color:#fff;
+overflow:hidden;
+font-family:Inter,sans-serif;
+}
+.bg-grid{
+background-size:30px 30px;
+background-image:
+linear-gradient(to right,rgba(255,255,255,.02) 1px,transparent 1px),
+linear-gradient(to bottom,rgba(255,255,255,.02) 1px,transparent 1px);
+}
+.glass{
+backdrop-filter:blur(14px);
+background:rgba(11,15,25,.55);
+border:1px solid #1E293B;
+}
+.timeline-node::before{
+content:'';
+position:absolute;
+left:-1.6rem;
+top:.6rem;
+width:.75rem;
+height:.75rem;
+border-radius:50%;
+background:#0B0F19;
+border:2px solid #1E293B;
+}
+.timeline-container::after{
+content:'';
+position:absolute;
+left:.35rem;
+top:1rem;
+bottom:0;
+width:2px;
+background:#1E293B;
+}
+</style>
+</head>
+
+<body class="flex h-screen">
+
+<div class="absolute inset-0 bg-grid pointer-events-none"></div>
+
+<!-- Sidebar -->
+<aside class="w-72 glass border-r border-[#1E293B] flex flex-col z-20">
+<div class="p-5 border-b border-[#1E293B] font-bold text-indigo-400">
+Roadmap AI
+</div>
+
+<div id="skills-list" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+
+<div class="p-4 border-t border-[#1E293B] flex justify-between items-center">
+<span id="user-email" class="text-xs text-gray-400"></span>
+<button id="logoutBtn" class="text-red-400 text-sm">Logout</button>
+</div>
+</aside>
+
+<!-- Main -->
+<main class="flex-1 flex flex-col z-10">
+<header class="h-16 glass border-b border-[#1E293B] flex items-center px-6">
+<h2 id="current-skill-title" class="text-indigo-400 font-semibold">Select a Path</h2>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8">
+<div id="empty-state" class="text-center text-gray-500 mt-20">
+Select roadmap from sidebar
+</div>
+
+<div id="roadmap-container"
+class="hidden max-w-2xl mx-auto pl-8 timeline-container relative"></div>
+</div>
+</main>
+
+<!-- Right Panel -->
+<aside class="w-96 glass border-l border-[#1E293B] flex flex-col z-20">
+
+<div class="p-4 border-b border-[#1E293B] text-indigo-400 font-semibold">
+AI Mentor
+</div>
+
+<div class="p-6 border-b border-[#1E293B]">
+<h3 id="node-title" class="text-xl font-bold"></h3>
+<div id="node-explain-content" class="text-sm text-gray-400 mt-2"></div>
+<ul id="node-certs-list" class="mt-4 space-y-2"></ul>
+</div>
+
+<div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
+<div class="glass p-3 rounded-xl max-w-[85%]">Hi 👋 I'm your AI mentor.</div>
+</div>
+
+<div class="p-4 border-t border-[#1E293B]">
+<input id="chat-input"
+class="w-full bg-[#0B0F19] border border-[#1E293B] rounded-xl px-4 py-3 text-sm"
+placeholder="Ask something...">
+</div>
+
+</aside>
+
+<script type="module">
+
+/* ================= FIREBASE ================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth,onAuthStateChanged,signOut }
+from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+import {
+getFirestore,
+doc,
+setDoc,
+onSnapshot
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyD4OUurLMulKg1-UPB92bYJBoo8_zkrHz8",
+authDomain:"fake-news-detector-4f585.firebaseapp.com",
+projectId:"fake-news-detector-4f585",
+appId:"1:87660438732:web:3e56fd10a9ab54b2a04e69"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+let userProgress={};
+let currentSkill=null;
+
+onAuthStateChanged(auth,user=>{
+if(!user){
+location.href="login.html";
+return;
+}
+
+document.getElementById("user-email").innerText=user.email;
+
+const userRef=doc(db,"users",user.uid);
+
+onSnapshot(userRef,(snap)=>{
+if(snap.exists()){
+userProgress=snap.data().completedNodes||{};
+if(currentSkill) loadRoadmap(currentSkill);
+}
+});
+});
+
+logoutBtn.onclick=()=>signOut(auth);
+
+/* ================= API ================= */
+
+const API="/api";
+
+async function loadSkills(){
+const skills=await fetch(API+"/skills").then(r=>r.json());
+const list=document.getElementById("skills-list");
+
+skills.forEach(s=>{
+const b=document.createElement("button");
+b.className="w-full text-left p-3 rounded hover:bg-[#111827] capitalize";
+b.innerText=s.replace(/-/g," ");
+b.onclick=()=>loadRoadmap(s);
+list.appendChild(b);
+});
+}
+
+async function loadRoadmap(skill){
+currentSkill=skill;
+
+empty-state.classList.add("hidden");
+roadmap-container.classList.remove("hidden");
+current-skill-title.innerText=skill.replace(/-/g," ");
+
+const data=await fetch(API+"/generate",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({skill})
+}).then(r=>r.json());
+
+renderNodes(skill,data.roadmap.nodes);
+}
+
+function renderNodes(skill,nodes){
+roadmap-container.innerHTML="";
+
+nodes.forEach(n=>{
+const key=`${skill}_${n}`;
+const done=userProgress[key];
+
+const div=document.createElement("div");
+
+div.className=
+`timeline-node relative p-4 mb-4 glass rounded-xl cursor-pointer
+${done?"border-green-500 bg-green-500/10":"hover:border-indigo-500"}`;
+
+div.innerHTML=`<h4 class="font-bold">${done?"✔ ":""}${n}</h4>`;
+
+div.onclick=async()=>{
+userProgress[key]=!userProgress[key];
+
+await setDoc(
+doc(db,"users",auth.currentUser.uid),
+{completedNodes:userProgress},
+{merge:true}
+);
+
+loadNode(n);
+loadRoadmap(skill);
+};
+
+roadmap-container.appendChild(div);
+});
+}
+
+async function loadNode(node){
+node-title.innerText=node;
+node-explain-content.innerHTML="Loading...";
+
+const explain=await fetch(API+"/explain",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({topic:node})
+}).then(r=>r.json());
+
+node-explain-content.innerHTML=explain.explanation.replace(/\n/g,"<br>");
+
+const certs=await fetch(API+"/node-certs",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({node})
+}).then(r=>r.json());
+
+node-certs-list.innerHTML=certs.certifications
+.map(c=>`<li><a class="text-indigo-400" target="_blank" href="${c.url}">${c.title}</a></li>`)
+.join("");
+}
+
+/* ================= CHAT ================= */
+
+chat-input.addEventListener("keypress",async e=>{
+if(e.key==="Enter"){
+const q=chat-input.value.trim();
+if(!q) return;
+
+chat-messages.innerHTML+=`<div class="ml-auto glass p-3 rounded-xl">${q}</div>`;
+chat-input.value="";
+
+const d=await fetch(API+"/chat",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({question:q})
+}).then(r=>r.json());
+
+chat-messages.innerHTML+=`<div class="glass p-3 rounded-xl">${d.reply}</div>`;
+chat-messages.scrollTop=chat-messages.scrollHeight;
+}
+});
+
+loadSkills();
+
+</script>
+
+</body>
+</html>

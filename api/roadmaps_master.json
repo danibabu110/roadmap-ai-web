@@ -1,0 +1,302 @@
+{
+  "frontend": {
+    "nodes": ["Internet","HTML","CSS","JavaScript","Git","React","Next.js","Testing","Web Security"],
+    "edges": [
+      ["Internet","HTML"],
+      ["HTML","CSS"],
+      ["CSS","JavaScript"],
+      ["JavaScript","Git"],
+      ["JavaScript","React"],
+      ["React","Next.js"],
+      ["Next.js","Testing"],
+      ["Testing","Web Security"]
+    ]
+  },
+
+  "backend": {
+    "nodes": ["Internet","Programming Language","Databases","APIs","Authentication","Caching","Message Queues","Scaling","System Design"],
+    "edges": [
+      ["Internet","Programming Language"],
+      ["Programming Language","Databases"],
+      ["Databases","APIs"],
+      ["APIs","Authentication"],
+      ["Authentication","Caching"],
+      ["Caching","Message Queues"],
+      ["Message Queues","Scaling"],
+      ["Scaling","System Design"]
+    ]
+  },
+
+  "full-stack": {
+    "nodes": ["Frontend Basics","Backend Basics","Databases","APIs","Authentication","Deployment","DevOps Basics"],
+    "edges": [
+      ["Frontend Basics","Backend Basics"],
+      ["Backend Basics","Databases"],
+      ["Databases","APIs"],
+      ["APIs","Authentication"],
+      ["Authentication","Deployment"],
+      ["Deployment","DevOps Basics"]
+    ]
+  },
+
+  "devops": {
+    "nodes": ["Linux","Networking","Git","CI/CD","Docker","Kubernetes","Cloud","Monitoring","Infrastructure as Code"],
+    "edges": [
+      ["Linux","Networking"],
+      ["Networking","Git"],
+      ["Git","CI/CD"],
+      ["CI/CD","Docker"],
+      ["Docker","Kubernetes"],
+      ["Kubernetes","Cloud"],
+      ["Cloud","Monitoring"],
+      ["Monitoring","Infrastructure as Code"]
+    ]
+  },
+
+  "devsecops": {
+    "nodes": ["Security Fundamentals","Networking","Encryption","CI/CD Security","Container Security","Cloud Security","Threat Modeling"],
+    "edges": [
+      ["Security Fundamentals","Networking"],
+      ["Networking","Encryption"],
+      ["Encryption","CI/CD Security"],
+      ["CI/CD Security","Container Security"],
+      ["Container Security","Cloud Security"],
+      ["Cloud Security","Threat Modeling"]
+    ]
+  },
+
+  "data-analyst": {
+    "nodes": ["Excel","SQL","Python","Data Cleaning","Data Visualization","Statistics","Dashboards","Business Insights"],
+    "edges": [
+      ["Excel","SQL"],
+      ["SQL","Python"],
+      ["Python","Data Cleaning"],
+      ["Data Cleaning","Data Visualization"],
+      ["Data Visualization","Statistics"],
+      ["Statistics","Dashboards"],
+      ["Dashboards","Business Insights"]
+    ]
+  },
+
+  "data-engineer": {
+    "nodes": ["Programming","SQL","Data Warehousing","ETL","Big Data","Cloud Platforms","Streaming","Data Pipelines"],
+    "edges": [
+      ["Programming","SQL"],
+      ["SQL","Data Warehousing"],
+      ["Data Warehousing","ETL"],
+      ["ETL","Big Data"],
+      ["Big Data","Cloud Platforms"],
+      ["Cloud Platforms","Streaming"],
+      ["Streaming","Data Pipelines"]
+    ]
+  },
+
+  "ai-engineer": {
+    "nodes": ["Python","Mathematics","Machine Learning","Deep Learning","NLP","LLMs","AI Agents","Deployment"],
+    "edges": [
+      ["Python","Mathematics"],
+      ["Mathematics","Machine Learning"],
+      ["Machine Learning","Deep Learning"],
+      ["Deep Learning","NLP"],
+      ["NLP","LLMs"],
+      ["LLMs","AI Agents"],
+      ["AI Agents","Deployment"]
+    ]
+  },
+
+  "ai-data-scientist": {
+    "nodes": ["Python","Statistics","Linear Algebra","Machine Learning","Deep Learning","Model Evaluation","Deployment"],
+    "edges": [
+      ["Python","Statistics"],
+      ["Statistics","Linear Algebra"],
+      ["Linear Algebra","Machine Learning"],
+      ["Machine Learning","Deep Learning"],
+      ["Deep Learning","Model Evaluation"],
+      ["Model Evaluation","Deployment"]
+    ]
+  },
+
+  "machine-learning": {
+    "nodes": ["Python","Statistics","Linear Algebra","Supervised Learning","Unsupervised Learning","Model Optimization","Deployment"],
+    "edges": [
+      ["Python","Statistics"],
+      ["Statistics","Linear Algebra"],
+      ["Linear Algebra","Supervised Learning"],
+      ["Supervised Learning","Unsupervised Learning"],
+      ["Unsupervised Learning","Model Optimization"],
+      ["Model Optimization","Deployment"]
+    ]
+  },
+
+  "mlops": {
+    "nodes": ["Python","Git","CI/CD","Docker","Kubernetes","Model Monitoring","Cloud Deployment"],
+    "edges": [
+      ["Python","Git"],
+      ["Git","CI/CD"],
+      ["CI/CD","Docker"],
+      ["Docker","Kubernetes"],
+      ["Kubernetes","Model Monitoring"],
+      ["Model Monitoring","Cloud Deployment"]
+    ]
+  },
+
+  "cyber-security": {
+    "nodes": ["Networking","Linux","Cryptography","Web Security","Penetration Testing","Security Tools","Incident Response"],
+    "edges": [
+      ["Networking","Linux"],
+      ["Linux","Cryptography"],
+      ["Cryptography","Web Security"],
+      ["Web Security","Penetration Testing"],
+      ["Penetration Testing","Security Tools"],
+      ["Security Tools","Incident Response"]
+    ]
+  },
+
+  "blockchain": {
+    "nodes": ["Cryptography","Blockchain Basics","Smart Contracts","Solidity","Web3","Security","DApps"],
+    "edges": [
+      ["Cryptography","Blockchain Basics"],
+      ["Blockchain Basics","Smart Contracts"],
+      ["Smart Contracts","Solidity"],
+      ["Solidity","Web3"],
+      ["Web3","Security"],
+      ["Security","DApps"]
+    ]
+  },
+
+  "android": {
+    "nodes": ["Kotlin","Java","Android SDK","UI Design","Networking","Architecture Components","Publishing"],
+    "edges": [
+      ["Kotlin","Android SDK"],
+      ["Android SDK","UI Design"],
+      ["UI Design","Networking"],
+      ["Networking","Architecture Components"],
+      ["Architecture Components","Publishing"]
+    ]
+  },
+
+  "ios": {
+    "nodes": ["Swift","iOS SDK","UI Design","Networking","Core Data","Architecture Patterns","Publishing"],
+    "edges": [
+      ["Swift","iOS SDK"],
+      ["iOS SDK","UI Design"],
+      ["UI Design","Networking"],
+      ["Networking","Core Data"],
+      ["Core Data","Architecture Patterns"],
+      ["Architecture Patterns","Publishing"]
+    ]
+  },
+
+  "game-developer": {
+    "nodes": ["Programming","Game Math","Game Engines","Graphics","Physics","Multiplayer","Optimization"],
+    "edges": [
+      ["Programming","Game Math"],
+      ["Game Math","Game Engines"],
+      ["Game Engines","Graphics"],
+      ["Graphics","Physics"],
+      ["Physics","Multiplayer"],
+      ["Multiplayer","Optimization"]
+    ]
+  },
+
+  "server-side-game-developer": {
+    "nodes": ["Networking","Server Architecture","Databases","APIs","Scaling","Security"],
+    "edges": [
+      ["Networking","Server Architecture"],
+      ["Server Architecture","Databases"],
+      ["Databases","APIs"],
+      ["APIs","Scaling"],
+      ["Scaling","Security"]
+    ]
+  },
+
+  "qa": {
+    "nodes": ["Testing Fundamentals","Manual Testing","Automation Testing","Selenium","API Testing","Performance Testing","CI/CD Integration"],
+    "edges": [
+      ["Testing Fundamentals","Manual Testing"],
+      ["Manual Testing","Automation Testing"],
+      ["Automation Testing","Selenium"],
+      ["Selenium","API Testing"],
+      ["API Testing","Performance Testing"],
+      ["Performance Testing","CI/CD Integration"]
+    ]
+  },
+
+  "product-manager": {
+    "nodes": ["Product Thinking","Market Research","User Stories","Roadmapping","Agile","Metrics","Growth"],
+    "edges": [
+      ["Product Thinking","Market Research"],
+      ["Market Research","User Stories"],
+      ["User Stories","Roadmapping"],
+      ["Roadmapping","Agile"],
+      ["Agile","Metrics"],
+      ["Metrics","Growth"]
+    ]
+  },
+
+  "engineering-manager": {
+    "nodes": ["Leadership","Hiring","Performance Management","System Design","Architecture","Stakeholder Management"],
+    "edges": [
+      ["Leadership","Hiring"],
+      ["Hiring","Performance Management"],
+      ["Performance Management","System Design"],
+      ["System Design","Architecture"],
+      ["Architecture","Stakeholder Management"]
+    ]
+  },
+
+  "software-architect": {
+    "nodes": ["System Design","Architecture Patterns","Microservices","Scalability","Security","Cloud Architecture"],
+    "edges": [
+      ["System Design","Architecture Patterns"],
+      ["Architecture Patterns","Microservices"],
+      ["Microservices","Scalability"],
+      ["Scalability","Security"],
+      ["Security","Cloud Architecture"]
+    ]
+  },
+
+  "technical-writer": {
+    "nodes": ["Writing Fundamentals","Technical Documentation","API Documentation","Tools","Editing","Publishing"],
+    "edges": [
+      ["Writing Fundamentals","Technical Documentation"],
+      ["Technical Documentation","API Documentation"],
+      ["API Documentation","Tools"],
+      ["Tools","Editing"],
+      ["Editing","Publishing"]
+    ]
+  },
+
+  "ux-design": {
+    "nodes": ["Design Principles","User Research","Wireframing","Prototyping","Usability Testing","Interaction Design"],
+    "edges": [
+      ["Design Principles","User Research"],
+      ["User Research","Wireframing"],
+      ["Wireframing","Prototyping"],
+      ["Prototyping","Usability Testing"],
+      ["Usability Testing","Interaction Design"]
+    ]
+  },
+
+  "bi-analyst": {
+    "nodes": ["Business Fundamentals","SQL","Data Visualization","KPIs","Dashboards","Stakeholder Communication"],
+    "edges": [
+      ["Business Fundamentals","SQL"],
+      ["SQL","Data Visualization"],
+      ["Data Visualization","KPIs"],
+      ["KPIs","Dashboards"],
+      ["Dashboards","Stakeholder Communication"]
+    ]
+  },
+
+  "postgresql-dba": {
+    "nodes": ["SQL Fundamentals","PostgreSQL Architecture","Indexes","Performance Tuning","Replication","Backup & Recovery"],
+    "edges": [
+      ["SQL Fundamentals","PostgreSQL Architecture"],
+      ["PostgreSQL Architecture","Indexes"],
+      ["Indexes","Performance Tuning"],
+      ["Performance Tuning","Replication"],
+      ["Replication","Backup & Recovery"]
+    ]
+  }
+}
