@@ -3,7 +3,6 @@ from flask_cors import CORS
 import json
 import os
 import requests
-# GEMINI VERSION FINAL
 
 app = Flask(__name__)
 CORS(app)
@@ -11,7 +10,7 @@ CORS(app)
 # ===============================
 # ENV VARIABLES
 # ===============================
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 # ===============================
 # LOAD ROADMAP DATA
@@ -38,39 +37,45 @@ def generate_free_certs(topic):
     ]
 
 # ===============================
-# GEMINI REQUEST
+# AI REQUEST (OPENROUTER FREE)
 # ===============================
-def ask_gemini(messages):
+def ask_ai(messages):
 
-    if not GEMINI_API_KEY:
-        return "⚠️ Gemini API key not configured."
+    if not OPENROUTER_API_KEY:
+        return "⚠️ AI key not configured."
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://roadmap-ai-web.vercel.app",
+        "X-Title": "Roadmap AI Mentor"
+    }
+
+    payload = {
+        "model": "openrouter/free",
+        "messages": messages
+    }
 
     try:
-        prompt = messages[-1]["content"]
+        r = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": prompt}]
-                }
-            ]
-        }
-
-        r = requests.post(url, json=payload, timeout=30)
         result = r.json()
 
-        if "candidates" in result:
-            return result["candidates"][0]["content"]["parts"][0]["text"]
+        if "choices" in result:
+            return result["choices"][0]["message"]["content"]
 
-        return "⚠️ Gemini busy. Try again."
+        return "⚠️ AI temporarily unavailable."
 
     except:
-        return "⚠️ Gemini request failed."
+        return "⚠️ AI request failed."
 
 # ===============================
-# AI INDUSTRY CERTS
+# AI INDUSTRY CERTIFICATIONS
 # ===============================
 def generate_ai_certifications(topic):
 
@@ -87,13 +92,13 @@ Return ONLY JSON list like:
   }}
 ]
 
-Include providers like:
+Include providers:
 Google, AWS, Microsoft, IBM, Meta, Coursera, Udemy.
 
 Maximum 6 items.
 """
 
-    result = ask_gemini([
+    result = ask_ai([
         {"role": "user", "content": prompt}
     ])
 
@@ -139,8 +144,9 @@ def node_certs():
 def explain():
     topic = request.json.get("topic", "")
 
-    explanation = ask_gemini([
-        {"role": "user", "content": f"Explain shortly: What is {topic}, why important, how to learn, time required."}
+    explanation = ask_ai([
+        {"role": "system", "content": "Explain shortly: What it is, Why important, How to learn, Time required."},
+        {"role": "user", "content": topic}
     ])
 
     return jsonify({"explanation": explanation})
@@ -149,7 +155,8 @@ def explain():
 def chat():
     question = request.json.get("question", "")
 
-    reply = ask_gemini([
+    reply = ask_ai([
+        {"role": "system", "content": "You are an AI learning mentor. Be concise and encouraging."},
         {"role": "user", "content": question}
     ])
 
