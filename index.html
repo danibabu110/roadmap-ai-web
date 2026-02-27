@@ -34,31 +34,7 @@ Click roadmap node
 </div>
 </aside>
 
-<script type="module">
-
-/* FIREBASE AUTH */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD4OUurLMulKg1-UPB92bYJBoo8_zkrHz8",
-  authDomain: "fake-news-detector-4f585.firebaseapp.com",
-  projectId: "fake-news-detector-4f585",
-  appId: "1:87660438732:web:3e56fd10a9ab54b2a04e69"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-onAuthStateChanged(auth,user=>{
-  if(!user){
-    window.location.href="/login.html";
-  }else{
-    fetchSkills();
-  }
-});
-
-/* APP */
+<script>
 const API_BASE = window.location.origin + "/api";
 
 const dom={
@@ -117,7 +93,6 @@ method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({topic:node})
 });
-
 const exp=await explain.json();
 
 const cert=await fetch(API_BASE+"/node-certs",{
@@ -125,12 +100,18 @@ method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({node})
 });
-
 const certs=await cert.json();
 
-let html=`<p>${exp.explanation}</p><h4 class="mt-3 text-blue-400">Courses</h4>`;
+let html=`<p>${exp.explanation}</p>
+<h4 class="mt-3 text-blue-400">Free Certifications</h4>`;
 
 certs.free_certifications.forEach(c=>{
+html+=`<a href="${c.url}" target="_blank" class="block bg-gray-700 p-2 mt-1 rounded">${c.title}</a>`;
+});
+
+html+=`<h4 class="mt-3 text-green-400">Industry Certifications</h4>`;
+
+certs.industry_certifications.forEach(c=>{
 html+=`<a href="${c.url}" target="_blank" class="block bg-gray-700 p-2 mt-1 rounded">${c.title}</a>`;
 });
 
@@ -138,11 +119,10 @@ dom.nodeExplain.innerHTML=html;
 }
 
 document.getElementById("send-btn").onclick=async()=>{
-
 const msg=dom.chatInput.value;
 if(!msg)return;
 
-dom.chatMessages.innerHTML += `<div>You: ${msg}</div>`;
+dom.chatMessages.innerHTML+=`<div>You: ${msg}</div>`;
 dom.chatInput.value="";
 
 const res=await fetch(API_BASE+"/chat",{
@@ -152,10 +132,11 @@ body:JSON.stringify({question:msg})
 });
 
 const data=await res.json();
-
-dom.chatMessages.innerHTML += `<div>AI: ${data.reply}</div>`;
+dom.chatMessages.innerHTML+=`<div>AI: ${data.reply}</div>`;
 };
 
+fetchSkills();
 </script>
+
 </body>
 </html>

@@ -24,14 +24,62 @@ with open(roadmap_path, "r", encoding="utf-8") as f:
 def normalize_skill(skill):
     return skill.lower().replace(" ", "-").replace("_", "-")
 
+# ---------- FREE CERTIFICATIONS ----------
 def generate_free_certs(topic):
     q = topic.replace(" ", "%20")
     return [
-        {"title": f"freeCodeCamp - {topic}", "url": f"https://www.freecodecamp.org/news/search/?query={q}"},
-        {"title": f"Coursera Free - {topic}", "url": f"https://www.coursera.org/search?query={q}&price=free"},
-        {"title": f"edX Free - {topic}", "url": f"https://www.edx.org/search?q={q}&price=free"}
+        {
+            "title": f"freeCodeCamp - {topic}",
+            "provider": "freeCodeCamp",
+            "type": "Free",
+            "url": f"https://www.freecodecamp.org/news/search/?query={q}"
+        },
+        {
+            "title": f"Coursera Free - {topic}",
+            "provider": "Coursera",
+            "type": "Free",
+            "url": f"https://www.coursera.org/search?query={q}&price=free"
+        },
+        {
+            "title": f"edX Free - {topic}",
+            "provider": "edX",
+            "type": "Free",
+            "url": f"https://www.edx.org/search?q={q}&price=free"
+        }
     ]
 
+# ---------- INDUSTRY CERTIFICATIONS ----------
+def generate_recognized_certs(topic):
+    return [
+        {
+            "title": f"AWS Certification - {topic}",
+            "provider": "AWS",
+            "type": "Industry Recognized",
+            "url": "https://aws.amazon.com/certification/"
+        },
+        {
+            "title": f"Google Professional Certification - {topic}",
+            "provider": "Google",
+            "type": "Industry Recognized",
+            "url": "https://cloud.google.com/certification"
+        },
+        {
+            "title": f"Microsoft Certification - {topic}",
+            "provider": "Microsoft",
+            "type": "Industry Recognized",
+            "url": "https://learn.microsoft.com/en-us/certifications/"
+        },
+        {
+            "title": f"IBM Professional Certificate - {topic}",
+            "provider": "IBM",
+            "type": "Industry Recognized",
+            "url": "https://www.coursera.org/professional-certificates"
+        }
+    ]
+
+# ===============================
+# AI CALL
+# ===============================
 def ask_ai(messages):
 
     if not OPENROUTER_API_KEY:
@@ -54,10 +102,11 @@ def ask_ai(messages):
             json=payload,
             timeout=30
         )
-        data = r.json()
 
-        if "choices" in data:
-            return data["choices"][0]["message"]["content"]
+        result = r.json()
+
+        if "choices" in result:
+            return result["choices"][0]["message"]["content"]
 
         return "⚠️ AI busy."
 
@@ -77,6 +126,7 @@ def skills():
 
 @app.route("/api/generate", methods=["POST"])
 def generate():
+
     skill = normalize_skill(request.json.get("skill",""))
 
     if skill not in ROADMAPS:
@@ -86,14 +136,17 @@ def generate():
 
 @app.route("/api/node-certs", methods=["POST"])
 def node_certs():
+
     node = request.json.get("node","")
+
     return jsonify({
         "free_certifications": generate_free_certs(node),
-        "industry_certifications":[]
+        "industry_certifications": generate_recognized_certs(node)
     })
 
 @app.route("/api/explain", methods=["POST"])
 def explain():
+
     topic = request.json.get("topic","")
 
     text = ask_ai([
@@ -105,6 +158,7 @@ def explain():
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
+
     q = request.json.get("question","")
 
     reply = ask_ai([
