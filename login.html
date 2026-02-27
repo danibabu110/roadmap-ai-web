@@ -1,74 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Roadmap AI Login</title>
+<title>Login - Roadmap AI</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-900 text-white flex items-center justify-center h-screen">
 
-<div class="bg-gray-800 p-8 rounded-xl w-96 shadow-xl">
-  <h1 class="text-2xl font-bold text-center mb-6">Login</h1>
+<div class="bg-gray-800 p-8 rounded-xl w-96">
+<h1 class="text-2xl font-bold mb-4 text-center">Login</h1>
 
-  <input id="email" placeholder="Email"
-    class="w-full p-2 mb-3 bg-gray-700 rounded">
+<input id="email" placeholder="Email"
+class="w-full p-2 mb-3 bg-gray-700 rounded">
 
-  <input id="password" type="password" placeholder="Password"
-    class="w-full p-2 mb-4 bg-gray-700 rounded">
+<input id="password" type="password" placeholder="Password"
+class="w-full p-2 mb-3 bg-gray-700 rounded">
 
-  <button id="loginBtn"
-    class="w-full bg-blue-600 p-2 rounded hover:bg-blue-500">
-    Login
-  </button>
+<button id="loginBtn"
+class="w-full bg-blue-600 p-2 rounded hover:bg-blue-500">
+Login
+</button>
 
-  <p id="msg" class="text-red-400 mt-3 text-sm"></p>
+<p id="msg" class="text-red-400 mt-2 text-sm"></p>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD4OUurLMulKg1-UPB92bYJBoo8_zkrHz8",
   authDomain: "fake-news-detector-4f585.firebaseapp.com",
   projectId: "fake-news-detector-4f585",
-  storageBucket: "fake-news-detector-4f585.firebasestorage.app",
-  messagingSenderId: "87660438732",
   appId: "1:87660438732:web:3e56fd10a9ab54b2a04e69"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-const msg = document.getElementById("msg");
+onAuthStateChanged(auth,user=>{
+  if(user){
+    window.location.href="/index.html";
+  }
+});
 
-document.getElementById("loginBtn").onclick = async () => {
-  try {
+document.getElementById("loginBtn").onclick=async()=>{
+  try{
     await signInWithEmailAndPassword(
       auth,
       document.getElementById("email").value,
       document.getElementById("password").value
     );
-    window.location.href = "/";
-  } catch(e){
-    msg.innerText = e.message;
+    window.location.href="/index.html";
+  }catch(e){
+    document.getElementById("msg").innerText=e.message;
   }
 };
 
-/* AUTO REDIRECT IF ALREADY LOGGED IN */
-onAuthStateChanged(auth,(user)=>{
-  if(user){
-    window.location.href="/";
-  }
-});
-
 </script>
+
 </body>
 </html>
