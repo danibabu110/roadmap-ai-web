@@ -52,9 +52,10 @@ def ask_openrouter(messages):
     }
 
     models = [
-        "stepfun/step-3.5-flash:free",
-        "openai/gpt-oss-120b:free"
-    ]
+    "meta-llama/llama-3-8b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "openai/gpt-oss-120b:free"
+]
 
     for model in models:
         try:
